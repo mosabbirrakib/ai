@@ -7,19 +7,6 @@ use Illuminate\Http\UploadedFile;
 abstract class Document extends File
 {
     /**
-     * Get the raw bytes of the file.
-     */
-    abstract public function content(): string;
-
-    /**
-     * Get the provider-formatted source payload for this document.
-     */
-    public function source(): array
-    {
-        return ['bytes' => $this->content()];
-    }
-
-    /**
      * Create a new document from a string.
      */
     public static function fromString(string $content, ?string $mimeType = null): Base64Document
@@ -54,12 +41,8 @@ abstract class Document extends File
     /**
      * Create a new remote document using the document at the given URL.
      */
-    public static function fromUrl(string $url): Document
+    public static function fromUrl(string $url): RemoteDocument
     {
-        if (str_starts_with($url, 's3://')) {
-            return new S3Document($url);
-        }
-
         return new RemoteDocument($url);
     }
 

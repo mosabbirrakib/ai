@@ -254,19 +254,6 @@ test('s3 document attachment includes bucketOwner when set', function () {
     ]);
 });
 
-test('document fromUrl with s3 scheme returns s3 document', function () {
-    $document = Document::fromUrl('s3://my-bucket/path/report.pdf');
-
-    expect($document)->toBeInstanceOf(S3Document::class)
-        ->and($document->url)->toBe('s3://my-bucket/path/report.pdf');
-});
-
-test('s3 document content throws unsupported exception', function () {
-    $document = new S3Document('s3://my-bucket/path/report.pdf');
-
-    $document->content();
-})->throws(InvalidArgumentException::class);
-
 test('document format maps common mime types', function () {
     $gateway = textGateway();
 

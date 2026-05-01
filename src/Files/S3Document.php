@@ -3,7 +3,6 @@
 namespace Laravel\Ai\Files;
 
 use Illuminate\Contracts\Support\Arrayable;
-use InvalidArgumentException;
 use JsonSerializable;
 
 class S3Document extends Document implements Arrayable, JsonSerializable
@@ -14,29 +13,6 @@ class S3Document extends Document implements Arrayable, JsonSerializable
         ?string $mimeType = null,
     ) {
         $this->mime = $mimeType;
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    public function content(): string
-    {
-        throw new InvalidArgumentException(
-            'S3Document cannot be read directly. It is only supported by providers that accept S3 location references. Use StoredDocument or RemoteDocument instead if you need to send the file contents inline.'
-        );
-    }
-
-    /**
-     * Get the provider-formatted source payload for this document.
-     */
-    public function source(): array
-    {
-        return [
-            's3Location' => array_filter([
-                'uri' => $this->url,
-                'bucketOwner' => $this->bucketOwner,
-            ]),
-        ];
     }
 
     /**

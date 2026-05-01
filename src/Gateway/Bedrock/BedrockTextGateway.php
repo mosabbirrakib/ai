@@ -6,12 +6,18 @@ use Generator;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Laravel\Ai\Contracts\Gateway\EmbeddingGateway;
 use Laravel\Ai\Contracts\Gateway\TextGateway;
 use Laravel\Ai\Contracts\Providers\EmbeddingProvider;
 use Laravel\Ai\Contracts\Providers\TextProvider;
 use Laravel\Ai\Contracts\Tool;
+use Laravel\Ai\Files\Base64Document;
 use Laravel\Ai\Files\Document;
+use Laravel\Ai\Files\LocalDocument;
+use Laravel\Ai\Files\RemoteDocument;
+use Laravel\Ai\Files\S3Document;
+use Laravel\Ai\Files\StoredDocument;
 use Laravel\Ai\Gateway\Bedrock\Concerns\CreatesBedrockClient;
 use Laravel\Ai\Gateway\Concerns\HandlesFailoverErrors;
 use Laravel\Ai\Gateway\Concerns\InvokesTools;
@@ -698,13 +704,37 @@ class BedrockTextGateway implements EmbeddingGateway, TextGateway
                     'document' => [
                         'format' => $this->getDocumentFormat($attachment),
                         'name' => $this->getDocumentName($attachment),
-                        'source' => $attachment->source(),
+                        'source' => $this->getDocumentSource($attachment),
                     ],
                 ];
             }
         }
 
         return ['role' => 'user', 'content' => $content];
+    }
+
+    /**
+     * Build the Bedrock Converse `source` block for the given document.
+     */
+    protected function getDocumentSource(Document $document): array
+    {
+        return match (true) {
+            $document instanceof S3Document => [
+                's3Location' => array_filter([
+                    'uri' => $document->url,
+                    'bucketOwner' => $document->bucketOwner,
+                ]),
+            ],
+            $document instanceof Base64Document,
+            $document instanceof LocalDocument,
+            $document instanceof RemoteDocument,
+            $document instanceof StoredDocument => [
+                'bytes' => $document->content(),
+            ],
+            default => throw new InvalidArgumentException(
+                'Unsupported document type for Bedrock ['.$document::class.'].'
+            ),
+        };
     }
 
     /**
